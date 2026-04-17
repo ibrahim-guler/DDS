@@ -22,8 +22,8 @@ namespace DDS
         // ==============================================================================
         // MODÜL 1: GÜVENLİK VE SINIR KONTROLÜ (Memory Overflow Koruması)
         // ==============================================================================
-        // Görevi (High Cohesion): Sadece metnin boyutunu kontrol eder ve sınırı aşarsa kırpar.
-        // Bağımsızlık (Low Coupling): Arayüzden (UI) bağımsızdır. Sadece metin alır ve verir.
+        // Görevi: Sadece metnin boyutunu kontrol eder ve sınırı aşarsa kırpar.
+        // Bağımsızlık: Arayüzden bağımsızdır. Sadece metin alır ve verir.
         private string GirdiyiGuvenliHaleGetir(string hamMetin, int maksimumKarakter)
         {
             // Eğer metin boşsa, direkt boş döndür
@@ -44,15 +44,15 @@ namespace DDS
 
 
         // ==============================================================================
-        // MODÜL 2: KAPSAMLI TEMİZLİK (REGEX) VE TÜRKÇE KARAKTER UYUMU
+        // MODÜL 2: KAPSAMLI TEMİZLİK VE TÜRKÇE KARAKTER UYUMU
         // ==============================================================================
-        // Görevi (High Cohesion): Metin analizi öncesi harf/boşluk harici tüm sembolleri yok eder.
+        // Görevi: Metin analizi öncesi harf/boşluk harici tüm sembolleri yok eder.
         private string MetniTamamenTemizle(string guvenliMetin)
         {
             // 1. Türkçe I ve İ harflerinde çuvallamaması için Türk kültürüne göre küçük harfe çevir.
             string kucukHarfliMetin = guvenliMetin.ToLower(new System.Globalization.CultureInfo("tr-TR"));
 
-            // 2. REGEX BÜYÜSÜ:
+            // 2. REGEX:
             // [^a-z0-9çğıöşü\s] -> a-z, rakamlar, Türkçe harfler ve boşluk (\s) HARİÇ her şeyi bul.
             // Bulunan o yabancı sembolleri "" (hiçlik) ile değiştirerek yok et.
             string tertemizMetin = Regex.Replace(kucukHarfliMetin, @"[^a-z0-9çğıöşü\s]", "");
@@ -157,7 +157,7 @@ namespace DDS
 
 
         // ==============================================================================
-        // ARAYÜZ (UI) KONTROLÜ: RESİM YAPIŞTIRMA ENGELİ (Input Validation)
+        // ARAYÜZ KONTROLÜ: RESİM YAPIŞTIRMA ENGELİ
         // ==============================================================================
         private void richTextBox1_KeyDown(object sender, KeyEventArgs e)
         {
