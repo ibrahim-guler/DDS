@@ -1,5 +1,5 @@
 # DDS
-DDS - Çevrimdışı Dezenformasyon Tespit Sistemi
+DDS - Çevrimdışı Doğruluk Değerlendirme Sistemi
 Geliştirici: Mehmet İbrahim GÜLER
 
 Proje Özeti: > DDS, haber metinlerini %100 çevrimdışı ve yerel bir SQLite veritabanı kullanarak analiz eden, kullanıcı gizliliğini merkeze alan bir masaüstü uygulamasıdır.
