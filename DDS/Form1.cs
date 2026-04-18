@@ -19,6 +19,7 @@ namespace DDS
             InitializeComponent();
         }
 
+
         // ==============================================================================
         // MODÜL 1: GÜVENLİK VE SINIR KONTROLÜ (Memory Overflow Koruması)
         // ==============================================================================
@@ -86,6 +87,80 @@ namespace DDS
 
             return Math.Round(riskYuzdesi, 2);
         }
+        // ==============================================================================
+        // MODÜL 4: VİTRİN HAFIZASI VE OTOMATİK TEMİZLİK (Log Yönetimi)
+        // ==============================================================================
+        // Görevi: Analiz sonucunu yazar ve limitin (30) aşılmasını engeller.
+        // Bağımsızlık: Butondan sadece metin ve skor alır, tüm veritabanı işini kendi çözer.
+        private void GecmiseKaydetVeTemizle(string hamMetin, double skor, int maksimumLogSayisi)
+        {
+            try
+            {
+                string baglantiYolu = "Data Source=Analiz.db;Version=3;";
+                using (SQLiteConnection baglanti = new SQLiteConnection(baglantiYolu))
+                {
+                    baglanti.Open();
+
+                    // 1. AŞAMA: Yeni Kaydı Ekle (INSERT)
+                    string insertSorgu = "INSERT INTO GecmisLoglar (MetinOzeti, Skor, Tarih) VALUES (@metin, @skor, @tarih)";
+                    using (SQLiteCommand insertKomut = new SQLiteCommand(insertSorgu, baglanti))
+                    {
+                        // Destanları veritabanına yazıp şişirmemek için metnin sadece ilk 40 karakterini alıyoruz
+                        string ozelMetin = hamMetin.Length > 40 ? hamMetin.Substring(0, 40) + "..." : hamMetin;
+
+                        insertKomut.Parameters.AddWithValue("@metin", ozelMetin);
+                        insertKomut.Parameters.AddWithValue("@skor", skor);
+                        insertKomut.Parameters.AddWithValue("@tarih", DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
+
+                        insertKomut.ExecuteNonQuery();
+                    }
+
+                    // 2. AŞAMA: Otomatik Bakım (Gereksizleri Sil)
+                    // En son eklenen X adet kayıt dışındaki her şeyi bul ve Yok Eder
+                    string deleteSorgu = "DELETE FROM GecmisLoglar WHERE LogID NOT IN (SELECT LogID FROM GecmisLoglar ORDER BY LogID DESC LIMIT @limit)";
+                    using (SQLiteCommand deleteKomut = new SQLiteCommand(deleteSorgu, baglanti))
+                    {
+                        deleteKomut.Parameters.AddWithValue("@limit", maksimumLogSayisi);
+                        deleteKomut.ExecuteNonQuery();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Sistemi Çökertmez: Eğer kayıt sırasında bir anlık kilitlenme olursa program kapanmasın (Fail-Safe)
+            }
+        }
+        // ==============================================================================
+        // MODÜL 5: VİTRİNİ DOLDUR (Geçmiş)
+        // ==============================================================================
+        // Görevi: Sadece veritabanından geçmişi okur ve ekrandaki tabloya basar.
+        private void GecmisiEkranaGetir()
+        {
+            try
+            {
+                string baglantiYolu = "Data Source=Analiz.db;Version=3;";
+                using (SQLiteConnection baglanti = new SQLiteConnection(baglantiYolu))
+                {
+                    // Verileri sondan başa (en yeni en üstte) olacak şekilde çekiyoruz.
+                    // "AS" komutuyla İngilizce sütun isimlerini arayüzde Türkçe görünsün diye makyajlıyoruz.
+                    string sorgu = "SELECT LogID AS 'Kayıt No', MetinOzeti AS 'Analiz Edilen Metin', Skor AS 'Risk Skoru (%)', Tarih FROM GecmisLoglar ORDER BY LogID DESC";
+
+                    // Adaptör, veritabanından veriyi alıp C#'ın anlayacağı bir Tabloya (DataTable) dönüştüren kuryedir.
+                    using (SQLiteDataAdapter adaptor = new SQLiteDataAdapter(sorgu, baglanti))
+                    {
+                        DataTable tablo = new DataTable();
+                        adaptor.Fill(tablo);
+
+                        // Formdaki o sürükleyip bıraktığımız DataGridView'in içine bu tabloyu fırlat!
+                        dataGridView1.DataSource = tablo;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Geçmiş yüklenirken bir hata oluştu: " + ex.Message);
+            }
+        }
 
         // ==============================================================================
         // ANA VİTRİN: "ANALİZ ET" BUTONU İŞLEMLERİ (Sadece organizasyon yapar)
@@ -140,6 +215,9 @@ namespace DDS
                 label1.Text = "Risk: %" + yuvarlanmisRisk + "\nDurum: YÜKSEK RİSK!\nDİKKAT: Bu metin açıkça manipülasyon içeriyor!";
             }
 
+            // ADIM 5: İŞİ UZMANINA DEVRET (Geçmişi Kaydet ve 30'da Sınırla)
+            GecmiseKaydetVeTemizle(kullaniciMetni, yuvarlanmisRisk, 30);
+
             button1.Enabled = true;
         }
 
@@ -157,5 +235,39 @@ namespace DDS
                 }
             }
         }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            // UYGULAMA AÇILIŞ POP-UP'I (Sorumluluk Reddi)
+            string uyariMetni = "MDAS Dezenformasyon Tespit Sistemi'ne Hoş Geldiniz.\n\n" +
+                                "DİKKAT:\n" +
+                                "1. Bu sistem %100 çevrimdışı (offline) çalışır. Verileriniz hiçbir sunucuya gönderilmez.\n" +
+                                "2. Üretilen risk skoru, sadece kelime yoğunluğu tabanlı istatistiksel bir öngörüdür ve KESİN SONUÇ taşımaz.\n" +
+                                "3. Lütfen analiz sonuçlarını resmi bir doğrulama aracı olarak kullanmayınız.\n\n" +
+                                "Sistemi kullanarak bu şartları kabul etmiş sayılırsınız.";
+
+
+            MessageBox.Show(uyariMetni, "Yasal Uyarı ve Sorumluluk Reddi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        
+    }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            // Eğer tablo zaten ekranda görünüyorsa (Açıksa)
+            if (dataGridView1.Visible == true)
+            {
+                // Tabloyu gizle
+                dataGridView1.Visible = false;
+            }
+            // Eğer tablo gizliyse (Kapalıysa)
+            else
+            {
+                // Tabloyu görünür yap ve verileri veritabanından çekip içine doldur!
+                dataGridView1.Visible = true;
+                GecmisiEkranaGetir();
+            }
+        }
+
+    
     }
 }
