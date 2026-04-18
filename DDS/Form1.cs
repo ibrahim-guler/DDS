@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -160,6 +160,9 @@ namespace DDS
             {
                 MessageBox.Show("Geçmiş yüklenirken bir hata oluştu: " + ex.Message);
             }
+        }
+
+            return Math.Round(riskYuzdesi, 2);
         }
 
         // ==============================================================================
