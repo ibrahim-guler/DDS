@@ -35,9 +35,9 @@
             // 
             // richTextBox1
             // 
-            this.richTextBox1.Location = new System.Drawing.Point(238, 157);
+            this.richTextBox1.Location = new System.Drawing.Point(238, 164);
             this.richTextBox1.Name = "richTextBox1";
-            this.richTextBox1.Size = new System.Drawing.Size(242, 35);
+            this.richTextBox1.Size = new System.Drawing.Size(242, 28);
             this.richTextBox1.TabIndex = 0;
             this.richTextBox1.Text = "";
             this.richTextBox1.KeyDown += new System.Windows.Forms.KeyEventHandler(this.richTextBox1_KeyDown);
